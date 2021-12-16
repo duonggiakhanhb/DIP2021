@@ -1,4 +1,6 @@
 import math
+import matplotlib.pyplot as plt
+import pyzbar.pyzbar as pyzbar
 
 import cv2
 import numpy as np
@@ -108,7 +110,6 @@ def extract(frame, debug=False):
     # hierarchy shape (1, n, 4)
     squares = []
     square_indices = []
-    # print(hierarchy.shape)
     i = 0
     for c in contours:
         # Approximate the contour
@@ -170,9 +171,7 @@ def extract(frame, debug=False):
             # b -- c        a -- b =  3/4 perimeter
             # |  /        =>a -- c =   1.06 perimeter
             # a
-            # print(max(closest_a, closest_b),
-            #       cv2.arcLength(square, True) * 2.5,
-            #       math.fabs(closest_a - closest_b) / max(closest_a, closest_b))
+            # print(max(closest_a, closest_b), cv2.arcLength(square, True) * 2.5, math.fabs(closest_a-closest_b) / max(closest_a, closest_b))
             if max(closest_a, closest_b) < cv2.arcLength(
                     square,
                     True) * 2.5 and math.fabs(closest_a - closest_b) / max(
@@ -255,6 +254,7 @@ def extract(frame, debug=False):
         vrx = np.array((rect[0], rect[1], rect[2], rect[3]), np.int32)
         vrx = vrx.reshape((-1, 1, 2))
         cv2.polylines(output, [vrx], True, (0, 255, 255), 1)
+
         # Warp codes and draw them
         wrect = np.zeros((4, 2), dtype="float32")
         wrect[0] = rect[0]
@@ -273,8 +273,15 @@ def extract(frame, debug=False):
         small = cv2.resize(warp, (50, 50), 0, 0, interpolation=cv2.INTER_CUBIC)
         _, small = cv2.threshold(small, 100, 255, cv2.THRESH_BINARY)
         codes.append(small)
-        if debug:
-            cv2.imshow("Warped: " + str(i), small)
+        if (main_corners and east_corners and south_corners):
+            decodedObjects = pyzbar.decode(warp)
+            for obj in decodedObjects:
+                print('Type : ', obj.type)
+                print('Data : ', obj.data, '\n')
+        #     plt.imshow(warp)e
+        #     plt.show()
+        # if debug:
+        #     cv2.imshow("Warped: " + str(i), small)
 
     if debug:
         # Draw debug information onto frame before outputting it

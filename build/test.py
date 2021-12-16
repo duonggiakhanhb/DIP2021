@@ -9,6 +9,9 @@ while True:
     _, frame = cap.read()
     codes, frame = reader.extract(frame, True)
     cv2.imshow("frame", frame)
+    
+    # codes = zbarlight.scan_codes(['qrcode'], codes)
+    # print('QR codes: %s' % codes)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         print("I quit!")
