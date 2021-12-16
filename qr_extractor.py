@@ -20,7 +20,9 @@ def count_children(hierarchy, parent, inner=False):
     elif not inner:
         # if first time
         return count_children(hierarchy, hierarchy[parent][2], True)
-    return 1 + count_children(hierarchy, hierarchy[parent][0], True) + count_children(hierarchy, hierarchy[parent][2], True)
+    return 1 + count_children(hierarchy,
+                              hierarchy[parent][0], True) + count_children(
+                                  hierarchy, hierarchy[parent][2], True)
 
 
 def has_square_parent(hierarchy, squares, parent):
@@ -33,8 +35,8 @@ def has_square_parent(hierarchy, squares, parent):
 
 def get_center(c):
     m = cv2.moments(c)
-    # Cx = M10/M00  Cy = M01/M00 
-    return [int(m["m10"] / m["m00"]), int(m["m01"] / m["m00"])] 
+    # Cx = M10/M00  Cy = M01/M00
+    return [int(m["m10"] / m["m00"]), int(m["m01"] / m["m00"])]
 
 
 def get_angle(p1, p2):
@@ -56,7 +58,9 @@ def get_farthest_points(contour, center):
         distances.append(d)
         distances_to_points[d] = point
     distances = sorted(distances)
-    return [distances_to_points[distances[-1]], distances_to_points[distances[-2]]]
+    return [
+        distances_to_points[distances[-1]], distances_to_points[distances[-2]]
+    ]
 
 
 def line_intersection(line1, line2):
@@ -77,10 +81,13 @@ def line_intersection(line1, line2):
 
 
 def extend(a, b, length, int_represent=False):
-    length_ab = math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+    length_ab = math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
     if length_ab * length <= 0:
         return b
-    result = [b[0] + (b[0] - a[0]) / length_ab * length, b[1] + (b[1] - a[1]) / length_ab * length]
+    result = [
+        b[0] + (b[0] - a[0]) / length_ab * length,
+        b[1] + (b[1] - a[1]) / length_ab * length
+    ]
     if int_represent:
         return [int(result[0]), int(result[1])]
     else:
@@ -96,22 +103,27 @@ def extract(frame, debug=False):
     gray = cv2.GaussianBlur(gray, (BLUR_VALUE, BLUR_VALUE), 0)
     edged = cv2.Canny(gray, 30, 200)
 
-    contours, hierarchy = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(edged.copy(), cv2.RETR_TREE,
+                                           cv2.CHAIN_APPROX_SIMPLE)
     # hierarchy shape (1, n, 4)
     squares = []
     square_indices = []
-    print(hierarchy.shape)
+    # print(hierarchy.shape)
     i = 0
     for c in contours:
         # Approximate the contour
         peri = cv2.arcLength(c, True)
         area = cv2.contourArea(c)
         approx = cv2.approxPolyDP(c, 0.03 * peri, True)
-        
+
         # Find all quadrilateral contours
         if len(approx) == 4:
             # Determine if quadrilateral is a square to within SQUARE_TOLERANCE
-            if area > 25 and 1 - SQUARE_TOLERANCE < math.fabs((peri / 4) ** 2) / area < 1 + SQUARE_TOLERANCE and count_children(hierarchy[0], i) >= 2 and has_square_parent(hierarchy[0], square_indices, i) is False:
+            if area > 25 and 1 - SQUARE_TOLERANCE < math.fabs(
+                (peri / 4)**
+                    2) / area < 1 + SQUARE_TOLERANCE and count_children(
+                        hierarchy[0], i) >= 2 and has_square_parent(
+                            hierarchy[0], square_indices, i) is False:
                 squares.append(approx)
                 square_indices.append(i)
         i += 1
@@ -126,14 +138,15 @@ def extract(frame, debug=False):
         area = cv2.contourArea(square)
         center = get_center(square)
         peri = cv2.arcLength(square, True)
-        print("peri: " + str(peri))
-        print(" square: ", square)
+        # print("peri: " + str(peri))
+        # print(" square: ", square)
         similar = []
         tiny = []
         for other in squares:
             if square[0][0][0] != other[0][0][0]:
                 # Determine if square is similar to other square within AREA_TOLERANCE
-                if math.fabs(area - cv2.contourArea(other)) / max(area, cv2.contourArea(other)) <= AREA_TOLERANCE:
+                if math.fabs(area - cv2.contourArea(other)) / max(
+                        area, cv2.contourArea(other)) <= AREA_TOLERANCE:
                     similar.append(other)
                 elif peri / 4 / 2 > cv2.arcLength(other, True) / 4:
                     tiny.append(other)
@@ -143,29 +156,37 @@ def extract(frame, debug=False):
             distances_to_contours = {}
             for sim in similar:
                 sim_center = get_center(sim)
-                print("center: ", sim_center)
-                d = math.hypot(sim_center[0] - center[0], sim_center[1] - center[1])    
+                # print("center: ", sim_center)
+                d = math.hypot(sim_center[0] - center[0],
+                               sim_center[1] - center[1])
                 distances.append(d)
                 distances_to_contours[d] = sim
             distances = sorted(distances)
             closest_a = distances[-1]
             closest_b = distances[-2]
-            print(distances)
+            # print(distances)
 
             # Determine if this square is the top left QR code indicator
             # b -- c        a -- b =  3/4 perimeter
-            # |  /        =>a -- c =   1.06 perimeter 
+            # |  /        =>a -- c =   1.06 perimeter
             # a
-            print(max(closest_a, closest_b), cv2.arcLength(square, True) * 2.5, math.fabs(closest_a-closest_b) / max(closest_a, closest_b))
-            if max(closest_a, closest_b) < cv2.arcLength(square, True) * 2.5 and math.fabs(closest_a - closest_b) / max(closest_a, closest_b) <= DISTANCE_TOLERANCE:
+            # print(max(closest_a, closest_b),
+            #       cv2.arcLength(square, True) * 2.5,
+            #       math.fabs(closest_a - closest_b) / max(closest_a, closest_b))
+            if max(closest_a, closest_b) < cv2.arcLength(
+                    square,
+                    True) * 2.5 and math.fabs(closest_a - closest_b) / max(
+                        closest_a, closest_b) <= DISTANCE_TOLERANCE:
                 # Determine placement of other indicators (even if code is rotated)
-                print("top left")
-                angle_a = get_angle(get_center(distances_to_contours[closest_a]), center)
-                angle_b = get_angle(get_center(distances_to_contours[closest_b]), center)
+                # print("top left")
+                angle_a = get_angle(
+                    get_center(distances_to_contours[closest_a]), center)
+                angle_b = get_angle(
+                    get_center(distances_to_contours[closest_b]), center)
                 if angle_a < angle_b or (angle_b < -90 and angle_a > 0):
                     east = distances_to_contours[closest_a]
                     south = distances_to_contours[closest_b]
-                else:   
+                else:
                     east = distances_to_contours[closest_b]
                     south = distances_to_contours[closest_a]
                 midpoint = get_midpoint(get_center(east), get_center(south))
@@ -177,7 +198,8 @@ def extract(frame, debug=False):
                 if len(tiny) > 0:
                     for tin in tiny:
                         tin_center = get_center(tin)
-                        d = math.hypot(tin_center[0] - midpoint[0], tin_center[1] - midpoint[1])
+                        d = math.hypot(tin_center[0] - midpoint[0],
+                                       tin_center[1] - midpoint[1])
                         if d < min_dist:
                             min_dist = d
                             t = tin
@@ -188,12 +210,15 @@ def extract(frame, debug=False):
                 if tiny_found:
                     # Easy, corner is just a few blocks away from the tiny indicator
                     tiny_squares.append(t)
-                    offset  = extend(midpoint, get_center(t), peri / 4 * 1.41421)
-                    print("offset: ", offset)
+                    offset = extend(midpoint, get_center(t),
+                                    peri / 4 * 1.41421)
+                    # print("offset: ", offset)
                 else:
                     # No tiny indicator found, must extrapolate corner based off of other corners instead
-                    farthest_a = get_farthest_points(distances_to_contours[closest_a], center)
-                    farthest_b = get_farthest_points(distances_to_contours[closest_b], center)
+                    farthest_a = get_farthest_points(
+                        distances_to_contours[closest_a], center)
+                    farthest_b = get_farthest_points(
+                        distances_to_contours[closest_b], center)
                     # Use sides of indicators to determine fourth corner
                     offset = line_intersection(farthest_a, farthest_b)
                     if offset[0] == -1:
@@ -201,11 +226,23 @@ def extract(frame, debug=False):
                         continue
                     offset = extend(midpoint, offset, peri / 4 / 7)
                     if debug:
-                        cv2.line(output, (farthest_a[0][0], farthest_a[0][1]), (farthest_a[1][0], farthest_a[1][1]), (0, 0, 255), 4)
-                        cv2.line(output, (farthest_b[0][0], farthest_b[0][1]), (farthest_b[1][0], farthest_b[1][1]), (0, 0, 255), 4)
+                        cv2.line(output, (farthest_a[0][0], farthest_a[0][1]),
+                                 (farthest_a[1][0], farthest_a[1][1]),
+                                 (0, 0, 255), 4)
+                        cv2.line(output, (farthest_b[0][0], farthest_b[0][1]),
+                                 (farthest_b[1][0], farthest_b[1][1]),
+                                 (0, 0, 255), 4)
 
                 # Append rectangle, offsetting to farthest borders
-                rectangles.append([extend(midpoint, center, diagonal / 2, True), extend(midpoint, get_center(distances_to_contours[closest_b]), diagonal / 2, True), offset, extend(midpoint, get_center(distances_to_contours[closest_a]), diagonal / 2, True)])
+                rectangles.append([
+                    extend(midpoint, center, diagonal / 2, True),
+                    extend(midpoint,
+                           get_center(distances_to_contours[closest_b]),
+                           diagonal / 2, True), offset,
+                    extend(midpoint,
+                           get_center(distances_to_contours[closest_a]),
+                           diagonal / 2, True)
+                ])
                 east_corners.append(east)
                 south_corners.append(south)
                 main_corners.append(square)
@@ -224,12 +261,12 @@ def extract(frame, debug=False):
         wrect[1] = rect[1]
         wrect[2] = rect[2]
         wrect[3] = rect[3]
-        dst = np.array([
-            [0, 0],
-            [WARP_DIM - 1, 0],
-            [WARP_DIM - 1, WARP_DIM - 1],
-            [0, WARP_DIM - 1]], dtype="float32")
-        warp = cv2.warpPerspective(frame, cv2.getPerspectiveTransform(wrect, dst), (WARP_DIM, WARP_DIM))
+        dst = np.array([[0, 0], [WARP_DIM - 1, 0],
+                        [WARP_DIM - 1, WARP_DIM - 1], [0, WARP_DIM - 1]],
+                       dtype="float32")
+        warp = cv2.warpPerspective(frame,
+                                   cv2.getPerspectiveTransform(wrect, dst),
+                                   (WARP_DIM, WARP_DIM))
         # Increase contrast
         warp = cv2.bilateralFilter(warp, 11, 17, 17)
         warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
