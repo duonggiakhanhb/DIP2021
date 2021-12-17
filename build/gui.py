@@ -116,11 +116,43 @@ qrFrame.place(x=793, y=164)
 # Function ----------------------------------------------------------------
 
 
-def cutImage(im, new_width):
+def cutImage(im, new_width, new_height=False):
     height, width, chanels = im.shape  # Get dimensions
     left = int((width - new_width) / 2)
+    top = height
+    if(new_height):
+        top = int((height - new_height) / 2)
+        return im[top:top + new_height, left:left + new_width]
+    else:
+        return im[ : , left:left + new_width]
     # Crop the center of the image
-    return im[:, left:left + new_width]
+
+
+# Brightness
+def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
+    
+    if brightness != 0:
+        if brightness > 0:
+            shadow = brightness
+            highlight = 255
+        else:
+            shadow = 0
+            highlight = 255 + brightness
+        alpha_b = (highlight - shadow)/255
+        gamma_b = shadow
+        
+        buf = cv2.addWeighted(input_img, alpha_b, input_img, 0, gamma_b)
+    else:
+        buf = input_img.copy()
+    
+    if contrast != 0:
+        f = 131*(contrast + 127)/(127*(131-contrast))
+        alpha_c = f
+        gamma_c = 127*(1-f)
+        
+        buf = cv2.addWeighted(buf, alpha_c, buf, 0, gamma_c)
+
+    return buf
 
 
 # Display ------------
@@ -158,8 +190,8 @@ def video_stream():
     if not capTurnOn:
         return
     _, frame = cap.read()
-    ratio = frame.shape[0] / height
-    frame = cv2.resize(frame, (0, 0),
+    ratio = height / frame.shape[0]
+    frame = cv2.resize(frame, None,
                        fx=ratio,
                        fy=ratio,
                        interpolation=cv2.INTER_AREA)
@@ -169,8 +201,11 @@ def video_stream():
     begin_width = int((frame.shape[1] - newWidth) / 2)
     frame = frame[begin_height:begin_height + newHeight,
                   begin_width:begin_width + newWidth]
+    widthQR = heightQR = 300
 
-    data, warp, check = reader.extract(frame, True)
+    # Detect qrcode
+    detect = cutImage(frame, widthQR, heightQR)
+    data, warp, check = reader.extract(detect, True)
     if (check):
         data = data.decode("utf-8")
         entry_1.insert("1.0", data + "\n")
@@ -178,16 +213,23 @@ def video_stream():
         changeCap()
         return
 
-    widthQR = heightQR = 300
     nowHeight, nowWidth = frame.shape[:2]
-    frame[0:newHeight - 1, 0:int(nowWidth / 2 - widthQR / 2)] -= 100
-    frame[0:newHeight - 1, int(nowWidth / 2 + widthQR / 2):newWidth - 1] -= 100
+    frame[0:newHeight - 1, 0:int(nowWidth / 2 - widthQR / 2)] = apply_brightness_contrast(
+        frame[0:newHeight - 1, 0:int(nowWidth / 2 - widthQR / 2)], -127, 0)
+    frame[0:newHeight - 1, int(nowWidth / 2 + widthQR / 2):newWidth - 1] = apply_brightness_contrast(
+        frame[0:newHeight - 1, int(nowWidth / 2 + widthQR / 2):newWidth - 1], -127, 0)
     frame[0:int(nowHeight / 2 - heightQR / 2),
           int(nowWidth / 2 - widthQR / 2):widthQR +
-          int(nowWidth / 2 - widthQR / 2)] -= 100
+          int(nowWidth / 2 - widthQR / 2)] = apply_brightness_contrast(
+              frame[0:int(nowHeight / 2 - heightQR / 2),
+              int(nowWidth / 2 - widthQR / 2):widthQR +
+              int(nowWidth / 2 - widthQR / 2)], -127, 0)
     frame[int(nowHeight / 2 + heightQR / 2):newHeight - 1,
           int(nowWidth / 2 - widthQR / 2):widthQR +
-          int(nowWidth / 2 - widthQR / 2)] -= 100
+          int(nowWidth / 2 - widthQR / 2)] = apply_brightness_contrast(
+              frame[int(nowHeight / 2 + heightQR / 2):newHeight - 1,
+            int(nowWidth / 2 - widthQR / 2):widthQR +
+            int(nowWidth / 2 - widthQR / 2)], -127, 0)
     # frame[frame < 0] = 0
 
     cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
