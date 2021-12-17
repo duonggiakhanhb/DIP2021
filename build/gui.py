@@ -4,7 +4,6 @@
 from pathlib import Path
 import cv2
 import numpy as np
-import imutils
 import PIL
 from PIL import Image, ImageTk
 import pytesseract
