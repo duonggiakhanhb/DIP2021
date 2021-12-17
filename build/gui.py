@@ -15,7 +15,7 @@ import pyzbar.pyzbar as pyzbar
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
-from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Canvas, NW, Label, Frame
+from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Canvas, NW, Label, Frame, END
 
 
 width, height = 630, 430
@@ -115,7 +115,7 @@ clear_btn = Button(
     borderwidth=0,
     bg = "#FFFFFF",
     highlightthickness=0,
-    command=lambda: print("clear_btn clicked"),
+    command=lambda: clear(),
     relief="flat"
 )
 clear_btn.place(
@@ -225,7 +225,7 @@ lmain.grid()
 
 # Show qrcode detected in the frame
 def showQr(img):
-    
+
     #Resize the image
     image = cv2.resize(img, (175, 175))
 
@@ -251,10 +251,9 @@ def video_stream():
     data, warp, check =  reader.extract(frame, True)
     if(check):
         data = data.decode("utf-8")
-        print(data)
-        print(type(data))
-        entry_1.insert("1.0", data)
+        entry_1.insert("1.0", data + "\n")
         showQr(warp)
+        changeCap()
         return
     cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     img = Image.fromarray(cv2image)
@@ -262,6 +261,9 @@ def video_stream():
     lmain.imgtk = imgtk
     lmain.configure(image=imgtk)
     lmain.after(1, video_stream)
+
+def clear():
+    entry_1.delete("1.0", END)
 
 def changeCap():
     global capTurnOn 

@@ -103,10 +103,18 @@ def extract(frame, debug=False):
 
     # Remove noise and unnecessary contours from frame
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    gray = cv2.bilateralFilter(gray, 11, 17, 17)
-    gray = cv2.GaussianBlur(gray, (BLUR_VALUE, BLUR_VALUE), 0)
+    gray = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,21,2)
+    # gray = cv2.bilateralFilter(gray, 11, 17, 17)
+    ret, gray = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY + 
+                                            cv2.THRESH_OTSU) 
+    # cv2.imshow("otsu", gray)
+    # cv2.waitKey(0)
+    # gray = cv2.GaussianBlur(gray, (BLUR_VALUE, BLUR_VALUE), 0)
+    # cv2.imshow("blur", gray)
+    # cv2.waitKey(0)
     edged = cv2.Canny(gray, 30, 200)
-
+    # cv2.imshow("canny", edged)
+    # cv2.waitKey(0)
     contours, hierarchy = cv2.findContours(edged.copy(), cv2.RETR_TREE,
                                            cv2.CHAIN_APPROX_SIMPLE)
     # hierarchy shape (1, n, 4)
@@ -255,8 +263,8 @@ def extract(frame, debug=False):
         # Draw rectangle
         vrx = np.array((rect[0], rect[1], rect[2], rect[3]), np.int32)
         vrx = vrx.reshape((-1, 1, 2))
-        cv2.polylines(output, [vrx], True, (0, 255, 255), 1)
-
+        cv2.polylines(gray, [vrx], True, (0, 255, 255), 1)
+        print(gray.shape)
         # Warp codes and draw them
         wrect = np.zeros((4, 2), dtype="float32")
         wrect[0] = rect[0]
@@ -266,13 +274,14 @@ def extract(frame, debug=False):
         dst = np.array([[0, 0], [WARP_DIM - 1, 0],
                         [WARP_DIM - 1, WARP_DIM - 1], [0, WARP_DIM - 1]],
                        dtype="float32")
-        warp = cv2.warpPerspective(frame,
+        warpCode = cv2.warpPerspective(gray,
                                    cv2.getPerspectiveTransform(wrect, dst),
                                    (WARP_DIM, WARP_DIM))
+        
         # Increase contrast
-        warp = cv2.bilateralFilter(warp, 11, 17, 17)
-        warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
-        (_, warpCode) = cv2.threshold(warp, 100, 255, cv2.THRESH_BINARY)
+        # warp = cv2.bilateralFilter(warp, 11, 17, 17)
+        # warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
+        # (_, warpCode) = cv2.threshold(warp, 100, 255, cv2.THRESH_BINARY)
         # small = cv2.resize(warp, (50, 50), 0, 0, interpolation=cv2.INTER_CUBIC)
         # _, small = cv2.threshold(small, 100, 255, cv2.THRESH_BINARY)
         # codes.append(small)
@@ -284,9 +293,9 @@ def extract(frame, debug=False):
             cv2.drawContours(output, south_corners, -1, (128, 0, 0), 2)
             cv2.drawContours(output, tiny_squares, -1, (128, 128, 0), 2)
         if(main_corners and east_corners and south_corners):
-            decodedObjects = pyzbar.decode(warp)
+            _, warpCode = cv2.threshold(warpCode, 100, 255, cv2.THRESH_BINARY)
+            decodedObjects = pyzbar.decode(warpCode)
             for obj in decodedObjects:
-                print("Code: ", obj)
                 return obj.data, warpCode, True
         #     plt.imshow(warp)e
         #     plt.show()
