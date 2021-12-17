@@ -5,10 +5,13 @@
 
 from pathlib import Path
 import cv2
+import numpy as np
 import imutils
 import PIL
 from PIL import Image,ImageTk
 import pytesseract
+import qr_extractor as reader
+import pyzbar.pyzbar as pyzbar
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
@@ -137,7 +140,7 @@ scan_btn = Button(
     borderwidth=0,
     bg = "#FFFFFF",
     highlightthickness=0,
-    command=lambda: print("scan_btn clicked"),
+    command=lambda: [changeCap(), video_stream() ],
     relief="flat"
 )
 scan_btn.place(
@@ -191,12 +194,25 @@ entry_1.place(
     height=119.0
 )
 
-
+qrFrame = Canvas(
+    window,
+    bg = "#FFFFFF",
+    height = 175,
+    width = 175,
+    bd = 0,
+    highlightthickness = 0,     
+    relief = "ridge"
+)
+qrFrame.place(x = 793, y = 164)
 
 
 # Function ----------------------------------------------------------------
 
-
+def cutImage(im, new_width):
+    height, width, chanels = im.shape   # Get dimensions
+    left = int((width - new_width)/2)
+    # Crop the center of the image
+    return im[:, left:left+new_width]
 
 # Display ------------
 
@@ -207,14 +223,39 @@ lmain = Label(app)
 # lmain.place(x = 362.5, y = 308.5)
 lmain.grid()
 
+# Show qrcode detected in the frame
+def showQr(img):
+    
+    #Resize the image
+    image = cv2.resize(img, (175, 175))
 
+    # Convert the image to a PhotoImage to display
+    image = image.astype(np.uint8)
+    im = Image.fromarray(image)
+    image = ImageTk.PhotoImage(im)
+    qrFrame.create_image(0.5, 0.5, anchor=NW, image=image)
+    window.mainloop()
+
+    
 # Capture from camera
 cap = cv2.VideoCapture(0)
-
+capTurnOn = False
 # function for video streaming
 def video_stream():
+    global capTurnOn
+    if not capTurnOn:
+        return
     _, frame = cap.read()
     frame = imutils.resize(frame, height=height)
+    frame = cutImage(frame, width-2)
+    data, warp, check =  reader.extract(frame, True)
+    if(check):
+        data = data.decode("utf-8")
+        print(data)
+        print(type(data))
+        entry_1.insert("1.0", data)
+        showQr(warp)
+        return
     cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     img = Image.fromarray(cv2image)
     imgtk = ImageTk.PhotoImage(image=img)
@@ -222,9 +263,13 @@ def video_stream():
     lmain.configure(image=imgtk)
     lmain.after(1, video_stream)
 
-video_stream()
+def changeCap():
+    global capTurnOn 
+    capTurnOn = not capTurnOn
 
-
+def destroyCap():
+    cap.release()
+    cv2.destroyAllWindows()
 
 window.resizable(False, False)
 window.mainloop()

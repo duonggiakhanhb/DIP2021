@@ -98,6 +98,8 @@ def extend(a, b, length, int_represent=False):
 
 def extract(frame, debug=False):
     output = frame.copy()
+    data = ""
+    warpCode = 0
 
     # Remove noise and unnecessary contours from frame
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -270,25 +272,27 @@ def extract(frame, debug=False):
         # Increase contrast
         warp = cv2.bilateralFilter(warp, 11, 17, 17)
         warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
-        small = cv2.resize(warp, (50, 50), 0, 0, interpolation=cv2.INTER_CUBIC)
-        _, small = cv2.threshold(small, 100, 255, cv2.THRESH_BINARY)
-        codes.append(small)
-        if (main_corners and east_corners and south_corners):
+        (_, warpCode) = cv2.threshold(warp, 100, 255, cv2.THRESH_BINARY)
+        # small = cv2.resize(warp, (50, 50), 0, 0, interpolation=cv2.INTER_CUBIC)
+        # _, small = cv2.threshold(small, 100, 255, cv2.THRESH_BINARY)
+        # codes.append(small)
+        if debug:
+            # Draw debug information onto frame before outputting it
+            cv2.drawContours(output, squares, -1, (5, 5, 5), 2)
+            cv2.drawContours(output, main_corners, -1, (0, 0, 128), 2)
+            cv2.drawContours(output, east_corners, -1, (0, 128, 0), 2)
+            cv2.drawContours(output, south_corners, -1, (128, 0, 0), 2)
+            cv2.drawContours(output, tiny_squares, -1, (128, 128, 0), 2)
+        if(main_corners and east_corners and south_corners):
             decodedObjects = pyzbar.decode(warp)
             for obj in decodedObjects:
-                print('Type : ', obj.type)
-                print('Data : ', obj.data, '\n')
+                print("Code: ", obj)
+                return obj.data, warpCode, True
         #     plt.imshow(warp)e
         #     plt.show()
         # if debug:
         #     cv2.imshow("Warped: " + str(i), small)
 
-    if debug:
-        # Draw debug information onto frame before outputting it
-        cv2.drawContours(output, squares, -1, (5, 5, 5), 2)
-        cv2.drawContours(output, main_corners, -1, (0, 0, 128), 2)
-        cv2.drawContours(output, east_corners, -1, (0, 128, 0), 2)
-        cv2.drawContours(output, south_corners, -1, (128, 0, 0), 2)
-        cv2.drawContours(output, tiny_squares, -1, (128, 128, 0), 2)
+    
 
-    return codes, output
+    return codes, output, False
