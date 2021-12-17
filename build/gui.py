@@ -169,6 +169,7 @@ def video_stream():
     begin_width = int((frame.shape[1] - newWidth) / 2)
     frame = frame[begin_height:begin_height + newHeight,
                   begin_width:begin_width + newWidth]
+
     data, warp, check = reader.extract(frame, True)
     if (check):
         data = data.decode("utf-8")
@@ -191,6 +192,8 @@ def clear():
 def changeCap():
     global capTurnOn
     capTurnOn = not capTurnOn
+    if not capTurnOn:
+        lmain.imgtk = None
 
 
 def destroyCap():
