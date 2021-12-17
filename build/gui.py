@@ -223,13 +223,20 @@ lmain = Label(app)
 # lmain.place(x = 362.5, y = 308.5)
 lmain.grid()
 
+# Show qrcode detected in the frame
 def showQr(img):
-    image = img.astype(np.uint8)
+    
+    #Resize the image
+    image = cv2.resize(img, (175, 175))
+
+    # Convert the image to a PhotoImage to display
+    image = image.astype(np.uint8)
     im = Image.fromarray(image)
     image = ImageTk.PhotoImage(im)
-    qrFrame.create_image(793, 164, anchor=NW, image=image)
+    qrFrame.create_image(0.5, 0.5, anchor=NW, image=image)
+    window.mainloop()
 
-
+    
 # Capture from camera
 cap = cv2.VideoCapture(0)
 capTurnOn = False

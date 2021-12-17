@@ -272,10 +272,10 @@ def extract(frame, debug=False):
         # Increase contrast
         warp = cv2.bilateralFilter(warp, 11, 17, 17)
         warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
-        warpCode = warp
-        small = cv2.resize(warp, (50, 50), 0, 0, interpolation=cv2.INTER_CUBIC)
-        _, small = cv2.threshold(small, 100, 255, cv2.THRESH_BINARY)
-        codes.append(small)
+        (_, warpCode) = cv2.threshold(warp, 100, 255, cv2.THRESH_BINARY)
+        # small = cv2.resize(warp, (50, 50), 0, 0, interpolation=cv2.INTER_CUBIC)
+        # _, small = cv2.threshold(small, 100, 255, cv2.THRESH_BINARY)
+        # codes.append(small)
         if debug:
             # Draw debug information onto frame before outputting it
             cv2.drawContours(output, squares, -1, (5, 5, 5), 2)
@@ -286,7 +286,7 @@ def extract(frame, debug=False):
         if(main_corners and east_corners and south_corners):
             decodedObjects = pyzbar.decode(warp)
             for obj in decodedObjects:
-                print("Code: ", obj.data)
+                print("Code: ", obj)
                 return obj.data, warpCode, True
         #     plt.imshow(warp)e
         #     plt.show()
