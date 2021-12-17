@@ -177,6 +177,19 @@ def video_stream():
         showQr(warp)
         changeCap()
         return
+
+    widthQR = heightQR = 300
+    nowHeight, nowWidth = frame.shape[:2]
+    frame[0:newHeight - 1, 0:int(nowWidth / 2 - widthQR / 2)] -= 100
+    frame[0:newHeight - 1, int(nowWidth / 2 + widthQR / 2):newWidth - 1] -= 100
+    frame[0:int(nowHeight / 2 - heightQR / 2),
+          int(nowWidth / 2 - widthQR / 2):widthQR +
+          int(nowWidth / 2 - widthQR / 2)] -= 100
+    frame[int(nowHeight / 2 + heightQR / 2):newHeight - 1,
+          int(nowWidth / 2 - widthQR / 2):widthQR +
+          int(nowWidth / 2 - widthQR / 2)] -= 100
+    # frame[frame < 0] = 0
+
     cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     img = Image.fromarray(cv2image)
     imgtk = ImageTk.PhotoImage(image=img)
