@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 # When everything done, release the capture
 # cap.release()
-frame = cv2.imread("./../noise.png")
+frame = cv2.imread("./../qrtest.png")
 
 codes, frame, check = reader.extract(frame, True)
 cv2.imshow("frae", frame)

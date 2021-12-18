@@ -300,15 +300,24 @@ def extract(frame, debug=False):
             cv2.drawContours(output, south_corners, -1, (128, 0, 0), 2)
             cv2.drawContours(output, tiny_squares, -1, (128, 128, 0), 2)
         if(main_corners and east_corners and south_corners):
-            _, warpCode = cv2.threshold(warpCode, 100, 255, cv2.THRESH_BINARY)
+            warpCode = cv2.adaptiveThreshold(warpCode,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            cv2.THRESH_BINARY,11,2)
+
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
-            warpCode = cv2.morphologyEx(warpCode, cv2.MORPH_CLOSE, kernel)
-            warpCode = cv2.morphologyEx(warpCode, cv2.MORPH_OPEN, kernel)
-            # cv2.imshow("warp", warpCode)
+            warpCode1 = cv2.morphologyEx(warpCode, cv2.MORPH_CLOSE, kernel)
+            warpCode1 = cv2.morphologyEx(warpCode, cv2.MORPH_OPEN, kernel)
+            decodedObjects = pyzbar.decode(warpCode1)
+            cv2.imshow('warpCode', warpCode1)
+            for obj in decodedObjects:
+                print("Code: ", obj.data)
+                return obj.data, warpCode1, True
+            cv2.imshow("warp", warpCode)
             decodedObjects = pyzbar.decode(warpCode)
             for obj in decodedObjects:
                 print("Code: ", obj.data)
                 return obj.data, warpCode, True
+
+            
         #     plt.imshow(warp)e
         #     plt.show()
         # if debug:
