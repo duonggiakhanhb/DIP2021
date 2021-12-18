@@ -103,7 +103,7 @@ def extract(frame, debug=False):
 
     # Remove noise and unnecessary contours from frame
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    gray = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,21,2)
+    # gray = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,21,2)
     # gray = cv2.bilateralFilter(gray, 11, 17, 17)
     ret, gray = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY + 
                                             cv2.THRESH_OTSU) 
