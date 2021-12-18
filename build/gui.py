@@ -14,7 +14,7 @@ import pyzbar.pyzbar as pyzbar
 # Explicit imports to satisfy Flake8
 from tkinter import Tk, Canvas, Entry, Text, Button, PhotoImage, Canvas, NW, Label, Frame, END
 
-width, height = 630, 430
+width, height = 587, 397
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
@@ -158,9 +158,9 @@ def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
 # Display ------------
 
 app = Frame(window, bg="white")
-app.place(x=47.5, y=93.5)
+app.place(x=69, y=109)
 # Create a label in the frame
-lmain = Label(app)
+lmain = Label(app, bg="#FFFFFF")
 # lmain.place(x = 362.5, y = 308.5)
 lmain.grid()
 
@@ -195,8 +195,8 @@ def video_stream():
                        fx=ratio,
                        fy=ratio,
                        interpolation=cv2.INTER_AREA)
-    frame = cutImage(frame, width - 2)
-    newHeight, newWidth = height - 5, width - 5
+    frame = cutImage(frame, width)
+    newHeight, newWidth = height, width
     begin_height = int((frame.shape[0] - newHeight) / 2)
     begin_width = int((frame.shape[1] - newWidth) / 2)
     frame = frame[begin_height:begin_height + newHeight,
