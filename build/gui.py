@@ -9,6 +9,7 @@ from PIL import Image, ImageTk
 import pytesseract
 import qr_extractor as reader
 import pyzbar.pyzbar as pyzbar
+import math
 
 # from tkinter import *
 # Explicit imports to satisfy Flake8
@@ -118,19 +119,20 @@ qrFrame.place(x=793, y=164)
 
 def cutImage(im, new_width, new_height=False):
     height, width, chanels = im.shape  # Get dimensions
+    print(height, new_height, width, new_width)
     left = int((width - new_width) / 2)
     top = height
-    if(new_height):
+    if (new_height):
         top = int((height - new_height) / 2)
         return im[top:top + new_height, left:left + new_width]
     else:
-        return im[ : , left:left + new_width]
+        return im[:, left:left + new_width]
     # Crop the center of the image
 
 
 # Brightness
-def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
-    
+def apply_brightness_contrast(input_img, brightness=0, contrast=0):
+
     if brightness != 0:
         if brightness > 0:
             shadow = brightness
@@ -138,18 +140,18 @@ def apply_brightness_contrast(input_img, brightness = 0, contrast = 0):
         else:
             shadow = 0
             highlight = 255 + brightness
-        alpha_b = (highlight - shadow)/255
+        alpha_b = (highlight - shadow) / 255
         gamma_b = shadow
-        
+
         buf = cv2.addWeighted(input_img, alpha_b, input_img, 0, gamma_b)
     else:
         buf = input_img.copy()
-    
+
     if contrast != 0:
-        f = 131*(contrast + 127)/(127*(131-contrast))
+        f = 131 * (contrast + 127) / (127 * (131 - contrast))
         alpha_c = f
-        gamma_c = 127*(1-f)
-        
+        gamma_c = 127 * (1 - f)
+
         buf = cv2.addWeighted(buf, alpha_c, buf, 0, gamma_c)
 
     return buf
@@ -191,11 +193,15 @@ def video_stream():
         return
     _, frame = cap.read()
     ratio = height / frame.shape[0]
-    frame = cv2.resize(frame, None,
+    if width > frame.shape[1] * ratio:
+        ratio = width / frame.shape[1]
+    frame = cv2.resize(frame,
+                       None,
                        fx=ratio,
                        fy=ratio,
                        interpolation=cv2.INTER_AREA)
-    frame = cutImage(frame, width)
+    frame = cutImage(frame, width, height)
+    print(frame.shape)
     newHeight, newWidth = height, width
     begin_height = int((frame.shape[0] - newHeight) / 2)
     begin_width = int((frame.shape[1] - newWidth) / 2)
@@ -214,22 +220,27 @@ def video_stream():
         return
 
     nowHeight, nowWidth = frame.shape[:2]
-    frame[0:newHeight - 1, 0:int(nowWidth / 2 - widthQR / 2)] = apply_brightness_contrast(
-        frame[0:newHeight - 1, 0:int(nowWidth / 2 - widthQR / 2)], -127, 0)
-    frame[0:newHeight - 1, int(nowWidth / 2 + widthQR / 2):newWidth - 1] = apply_brightness_contrast(
-        frame[0:newHeight - 1, int(nowWidth / 2 + widthQR / 2):newWidth - 1], -127, 0)
+    frame[0:newHeight - 1,
+          0:int(nowWidth / 2 - widthQR / 2)] = apply_brightness_contrast(
+              frame[0:newHeight - 1, 0:int(nowWidth / 2 - widthQR / 2)], -127,
+              0)
+    frame[0:newHeight - 1,
+          int(nowWidth / 2 + widthQR / 2):newWidth -
+          1] = apply_brightness_contrast(
+              frame[0:newHeight - 1,
+                    int(nowWidth / 2 + widthQR / 2):newWidth - 1], -127, 0)
     frame[0:int(nowHeight / 2 - heightQR / 2),
           int(nowWidth / 2 - widthQR / 2):widthQR +
           int(nowWidth / 2 - widthQR / 2)] = apply_brightness_contrast(
               frame[0:int(nowHeight / 2 - heightQR / 2),
-              int(nowWidth / 2 - widthQR / 2):widthQR +
-              int(nowWidth / 2 - widthQR / 2)], -127, 0)
+                    int(nowWidth / 2 - widthQR / 2):widthQR +
+                    int(nowWidth / 2 - widthQR / 2)], -127, 0)
     frame[int(nowHeight / 2 + heightQR / 2):newHeight - 1,
           int(nowWidth / 2 - widthQR / 2):widthQR +
           int(nowWidth / 2 - widthQR / 2)] = apply_brightness_contrast(
               frame[int(nowHeight / 2 + heightQR / 2):newHeight - 1,
-            int(nowWidth / 2 - widthQR / 2):widthQR +
-            int(nowWidth / 2 - widthQR / 2)], -127, 0)
+                    int(nowWidth / 2 - widthQR / 2):widthQR +
+                    int(nowWidth / 2 - widthQR / 2)], -127, 0)
     # frame[frame < 0] = 0
 
     cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
