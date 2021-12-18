@@ -278,8 +278,8 @@ def extract(frame, debug=False):
         # height_CD = np.sqrt(((rect[2][0] - rect[3][0]) ** 2) + ((rect[2][1] - rect[3][1]) ** 2))
         # maxHeight = max(int(height_AB), int(height_CD), int(height_AD), int(height_BC))
 
-        dst = np.array([[0, 0], [0, WARP_DIM - 1],
-                        [WARP_DIM - 1, WARP_DIM - 1], [WARP_DIM - 1, 0]],
+        dst = np.array([[0, 0], [WARP_DIM - 1, 0],
+                        [WARP_DIM - 1, WARP_DIM - 1], [0,WARP_DIM - 1]],
                        dtype="float32")
         warpCode = cv2.warpPerspective(gray,
                                    cv2.getPerspectiveTransform(wrect, dst),
@@ -300,18 +300,19 @@ def extract(frame, debug=False):
             cv2.drawContours(output, south_corners, -1, (128, 0, 0), 2)
             cv2.drawContours(output, tiny_squares, -1, (128, 128, 0), 2)
         if(main_corners and east_corners and south_corners):
-            warpCode = cv2.adaptiveThreshold(warpCode,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-            cv2.THRESH_BINARY,11,2)
-
+            # Apply threshold binary 
+            _, warpCode0 = cv2.threshold(warpCode, 100, 255, cv2.THRESH_BINARY)
+            # cv2.imshow('warpCode1', warpCode0)
+            # Apply closing and opening
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
-            warpCode1 = cv2.morphologyEx(warpCode, cv2.MORPH_CLOSE, kernel)
-            warpCode1 = cv2.morphologyEx(warpCode, cv2.MORPH_OPEN, kernel)
+            warpCode1 = cv2.morphologyEx(warpCode0, cv2.MORPH_CLOSE, kernel)
+            warpCode1 = cv2.morphologyEx(warpCode1, cv2.MORPH_OPEN, kernel)
             decodedObjects = pyzbar.decode(warpCode1)
-            cv2.imshow('warpCode', warpCode1)
             for obj in decodedObjects:
                 print("Code: ", obj.data)
                 return obj.data, warpCode1, True
-            cv2.imshow("warp", warpCode)
+            
+            # No apply
             decodedObjects = pyzbar.decode(warpCode)
             for obj in decodedObjects:
                 print("Code: ", obj.data)
