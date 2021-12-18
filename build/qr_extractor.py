@@ -271,13 +271,19 @@ def extract(frame, debug=False):
         wrect[1] = rect[1]
         wrect[2] = rect[2]
         wrect[3] = rect[3]
-        dst = np.array([[0, 0], [WARP_DIM - 1, 0],
-                        [WARP_DIM - 1, WARP_DIM - 1], [0, WARP_DIM - 1]],
+
+        # height_AD = np.sqrt(((rect[0][0] - rect[3][0]) ** 2) + ((rect[0][1] - rect[3][1]) ** 2))
+        # height_BC = np.sqrt(((rect[1][0] - rect[2][0]) ** 2) + ((rect[1][1] - rect[2][1]) ** 2))
+        # height_AB = np.sqrt(((rect[0][0] - rect[1][0]) ** 2) + ((rect[0][1] - rect[1][1]) ** 2))
+        # height_CD = np.sqrt(((rect[2][0] - rect[3][0]) ** 2) + ((rect[2][1] - rect[3][1]) ** 2))
+        # maxHeight = max(int(height_AB), int(height_CD), int(height_AD), int(height_BC))
+
+        dst = np.array([[0, 0], [0, WARP_DIM - 1],
+                        [WARP_DIM - 1, WARP_DIM - 1], [WARP_DIM - 1, 0]],
                        dtype="float32")
         warpCode = cv2.warpPerspective(gray,
                                    cv2.getPerspectiveTransform(wrect, dst),
                                    (WARP_DIM, WARP_DIM))
-        
         # Increase contrast
         # warp = cv2.bilateralFilter(warp, 11, 17, 17)
         # warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
@@ -285,6 +291,7 @@ def extract(frame, debug=False):
         # small = cv2.resize(warp, (50, 50), 0, 0, interpolation=cv2.INTER_CUBIC)
         # _, small = cv2.threshold(small, 100, 255, cv2.THRESH_BINARY)
         # codes.append(small)
+        # cv2.imshow('small', warpCode)
         if debug:
             # Draw debug information onto frame before outputting it
             cv2.drawContours(output, squares, -1, (5, 5, 5), 2)
@@ -294,7 +301,10 @@ def extract(frame, debug=False):
             cv2.drawContours(output, tiny_squares, -1, (128, 128, 0), 2)
         if(main_corners and east_corners and south_corners):
             _, warpCode = cv2.threshold(warpCode, 100, 255, cv2.THRESH_BINARY)
-            cv2.imshow("warp", warpCode)
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
+            warpCode = cv2.morphologyEx(warpCode, cv2.MORPH_CLOSE, kernel)
+            warpCode = cv2.morphologyEx(warpCode, cv2.MORPH_OPEN, kernel)
+            # cv2.imshow("warp", warpCode)
             decodedObjects = pyzbar.decode(warpCode)
             for obj in decodedObjects:
                 print("Code: ", obj.data)
