@@ -108,13 +108,14 @@ def extract(frame, debug=False):
     ret, gray = cv2.threshold(gray, 120, 255, cv2.THRESH_BINARY + 
                                             cv2.THRESH_OTSU) 
     # cv2.imshow("otsu", gray)
-    # cv2.waitKey(0)
-    # gray = cv2.GaussianBlur(gray, (BLUR_VALUE, BLUR_VALUE), 0)
+    # edged = cv2.Canny(gray, 30, 200)
+    # cv2.imshow("canny1", edged)
+    gray = cv2.medianBlur(gray, BLUR_VALUE)
+    # cv2.imshow("median", gray)
+    gray = cv2.GaussianBlur(gray, (BLUR_VALUE, BLUR_VALUE), 0)
     # cv2.imshow("blur", gray)
-    # cv2.waitKey(0)
     edged = cv2.Canny(gray, 30, 200)
     # cv2.imshow("canny", edged)
-    # cv2.waitKey(0)
     contours, hierarchy = cv2.findContours(edged.copy(), cv2.RETR_TREE,
                                            cv2.CHAIN_APPROX_SIMPLE)
     # hierarchy shape (1, n, 4)
@@ -264,7 +265,6 @@ def extract(frame, debug=False):
         vrx = np.array((rect[0], rect[1], rect[2], rect[3]), np.int32)
         vrx = vrx.reshape((-1, 1, 2))
         cv2.polylines(gray, [vrx], True, (0, 255, 255), 1)
-        print(gray.shape)
         # Warp codes and draw them
         wrect = np.zeros((4, 2), dtype="float32")
         wrect[0] = rect[0]
@@ -294,8 +294,10 @@ def extract(frame, debug=False):
             cv2.drawContours(output, tiny_squares, -1, (128, 128, 0), 2)
         if(main_corners and east_corners and south_corners):
             _, warpCode = cv2.threshold(warpCode, 100, 255, cv2.THRESH_BINARY)
+            cv2.imshow("warp", warpCode)
             decodedObjects = pyzbar.decode(warpCode)
             for obj in decodedObjects:
+                print("Code: ", obj.data)
                 return obj.data, warpCode, True
         #     plt.imshow(warp)e
         #     plt.show()
