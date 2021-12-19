@@ -195,6 +195,7 @@ def video_stream():
     if not capTurnOn:
         return
     _, frame = cap.read()
+    frameC = frame.copy()
     ratio = height / frame.shape[0]
     if width > frame.shape[1] * ratio:
         ratio = width / frame.shape[1]
@@ -210,9 +211,11 @@ def video_stream():
     frame = frame[begin_height:begin_height + newHeight,
                   begin_width:begin_width + newWidth]
     widthQR = heightQR = 300
-
+    
     # Detect qrcode
-    detect = cutImage(frame, widthQR, heightQR)
+    widthTest = int(1/ratio*widthQR)
+    detect = cutImage(frameC, widthTest, widthTest)
+
     data, warp, check = reader.extract(detect, True)
     if (check):
         data = data.decode("utf-8")
@@ -244,7 +247,6 @@ def video_stream():
                     int(nowWidth / 2 - widthQR / 2):widthQR +
                     int(nowWidth / 2 - widthQR / 2)], -127, 0)
     # frame[frame < 0] = 0
-
     cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
     img = Image.fromarray(cv2image)
     imgtk = ImageTk.PhotoImage(image=img)

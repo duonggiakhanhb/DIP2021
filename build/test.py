@@ -19,9 +19,10 @@ import matplotlib.pyplot as plt
 
 # When everything done, release the capture
 # cap.release()
-frame = cv2.imread("./../qrtest.png")
+frame = cv2.imread("./../qr1.jpg")
 
 codes, frame, check = reader.extract(frame, True)
 plt.imshow(frame, cmap='gray')
 plt.show()
-
+cv2.waitKey(0)
+cv2.destroyAllWindows()
