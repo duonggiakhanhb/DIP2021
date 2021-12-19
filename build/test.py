@@ -2,6 +2,7 @@ import cv2
 
 import qr_extractor as reader
 import matplotlib.pyplot as plt
+from PIL import Image
 
 # cap = cv2.VideoCapture(0)
 
@@ -22,7 +23,9 @@ import matplotlib.pyplot as plt
 frame = cv2.imread("./../qr1.jpg")
 
 codes, frame, check = reader.extract(frame, True)
-plt.imshow(frame, cmap='gray')
-plt.show()
+
+cv2.imshow("frame", frame)
 cv2.waitKey(0)
+plt.imshow(frame)
+plt.show()
 cv2.destroyAllWindows()

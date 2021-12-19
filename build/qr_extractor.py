@@ -4,6 +4,7 @@ import pyzbar.pyzbar as pyzbar
 
 import cv2
 import numpy as np
+from scipy.spatial import distance as dist
 
 BLUR_VALUE = 3
 SQUARE_TOLERANCE = 0.15
@@ -14,6 +15,29 @@ SMALL_DIM = 29
 
 imgs = []
 
+def order_points(pts):
+    # sort the points based on their x-coordinates
+    arrp = np.array(pts.copy())
+    xSorted = arrp[arrp[:,0].argsort()]
+    # grab the left-most and right-most points from the sorted
+    # x-roodinate points
+    leftMost = xSorted[:2, :]
+    rightMost = xSorted[2:, :]
+    # now, sort the left-most coordinates according to their
+    # y-coordinates so we can grab the top-left and bottom-left
+    # points, respectively
+    leftMost = leftMost[leftMost[:,1].argsort()]
+    [tl, bl] = leftMost
+    # now that we have the top-left coordinate, use it as an
+    # anchor to calculate the Euclidean distance between the
+    # top-left and right-most points; by the Pythagorean
+    # theorem, the point with the largest distance will be
+    # our bottom-right point
+    D = dist.cdist(tl[np.newaxis], rightMost, "euclidean")[0]
+    (br, tr) = rightMost[np.argsort(D)[::-1], :]
+    # return the coordinates in top-left, top-right,
+    # bottom-right, and bottom-left order
+    return np.array([tl, tr, br, bl], dtype="float32")
 
 def count_children(hierarchy, parent, inner=False):
     # condition break
@@ -269,11 +293,9 @@ def extract(frame, debug=False):
         vrx = vrx.reshape((-1, 1, 2))
         cv2.polylines(gray, [vrx], True, (0, 255, 255), 1)
         # Warp codes and draw them
-        wrect = np.zeros((4, 2), dtype="float32")
-        wrect[0] = rect[0]
-        wrect[1] = rect[1]
-        wrect[2] = rect[2]
-        wrect[3] = rect[3]
+        # print("rect: ", rect)
+        wrect = order_points(rect)
+
 
         # height_AD = np.sqrt(((rect[0][0] - rect[3][0]) ** 2) + ((rect[0][1] - rect[3][1]) ** 2))
         # height_BC = np.sqrt(((rect[1][0] - rect[2][0]) ** 2) + ((rect[1][1] - rect[2][1]) ** 2))
