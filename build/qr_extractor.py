@@ -160,8 +160,10 @@ def extract(frame, debug=False):
                 if math.fabs(area - cv2.contourArea(other)) / max(
                         area, cv2.contourArea(other)) <= AREA_TOLERANCE:
                     similar.append(other)
+                # Determine if square is tiny to within TINY_TOLERANCE
                 elif peri / 4 / 2 > cv2.arcLength(other, True) / 4:
                     tiny.append(other)
+
 
         if len(similar) >= 2:
             distances = []
@@ -174,6 +176,7 @@ def extract(frame, debug=False):
                 distances.append(d)
                 distances_to_contours[d] = sim
             distances = sorted(distances)
+            # Find the two closest squares
             closest_a = distances[-1]
             closest_b = distances[-2]
             # print(distances)
@@ -182,7 +185,6 @@ def extract(frame, debug=False):
             # b -- c        a -- b =  3/4 perimeter
             # |  /        =>a -- c =   1.06 perimeter
             # a
-            # print(max(closest_a, closest_b), cv2.arcLength(square, True) * 2.5, math.fabs(closest_a-closest_b) / max(closest_a, closest_b))
             if max(closest_a, closest_b) < cv2.arcLength(
                     square,
                     True) * 2.5 and math.fabs(closest_a - closest_b) / max(
@@ -234,14 +236,15 @@ def extract(frame, debug=False):
                     if offset[0] == -1:
                         # Error, extrapolation failed, go on to next possible code
                         continue
-                    offset = extend(midpoint, offset, peri / 4 / 7)
-                    if debug:
-                        cv2.line(output, (farthest_a[0][0], farthest_a[0][1]),
-                                 (farthest_a[1][0], farthest_a[1][1]),
-                                 (0, 0, 255), 4)
-                        cv2.line(output, (farthest_b[0][0], farthest_b[0][1]),
-                                 (farthest_b[1][0], farthest_b[1][1]),
-                                 (0, 0, 255), 4)
+                    # offset = extend(midpoint, offset, peri / 4 / 7)
+                    # print("offset: ", offset)
+                    # if debug:
+                    #     cv2.line(output, (farthest_a[0][0], farthest_a[0][1]),
+                    #              (farthest_a[1][0], farthest_a[1][1]),
+                    #              (0, 0, 255), 4)
+                    #     cv2.line(output, (farthest_b[0][0], farthest_b[0][1]),
+                    #              (farthest_b[1][0], farthest_b[1][1]),
+                    #              (0, 0, 255), 4)
 
                 # Append rectangle, offsetting to farthest borders
                 rectangles.append([

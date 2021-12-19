@@ -22,6 +22,6 @@ import matplotlib.pyplot as plt
 frame = cv2.imread("./../qrtest.png")
 
 codes, frame, check = reader.extract(frame, True)
-cv2.imshow("frae", frame)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+plt.imshow(frame, cmap='gray')
+plt.show()
+

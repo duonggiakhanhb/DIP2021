@@ -2,6 +2,7 @@
 # https://github.com/ParthJadhav/Tkinter-Designer
 
 from pathlib import Path
+import pyperclip3 as pc
 import cv2
 import numpy as np
 import PIL
@@ -63,7 +64,7 @@ coppy_btn = Button(image=coppy_btn_image,
                    borderwidth=0,
                    bg="#FFFFFF",
                    highlightthickness=0,
-                   command=lambda: print("button_1 clicked"),
+                   command=lambda: copyText(),
                    relief="flat")
 coppy_btn.place(x=756.0, y=579.0, width=107.0, height=42.0)
 
@@ -115,11 +116,13 @@ qrFrame = Canvas(window,
 qrFrame.place(x=793, y=164)
 
 # Function ----------------------------------------------------------------
-
+def copyText():
+    text = entry_1.get("1.0", END)
+    pc.copy(text)
 
 def cutImage(im, new_width, new_height=False):
     height, width, chanels = im.shape  # Get dimensions
-    print(height, new_height, width, new_width)
+    # print(height, new_height, width, new_width)
     left = int((width - new_width) / 2)
     top = height
     if (new_height):
@@ -201,7 +204,6 @@ def video_stream():
                        fy=ratio,
                        interpolation=cv2.INTER_AREA)
     frame = cutImage(frame, width, height)
-    print(frame.shape)
     newHeight, newWidth = height, width
     begin_height = int((frame.shape[0] - newHeight) / 2)
     begin_width = int((frame.shape[1] - newWidth) / 2)
